@@ -12,8 +12,6 @@
 
 #include "../traits.hpp"
 
-#include <iostream>
-
 namespace alink::detail {
 
 template <typename Key, typename Value>
@@ -51,41 +49,29 @@ inline V const& access_value(std::pair<K, std::shared_ptr<V>> const& x) {
 
 // This is required, because moving from an lvalue ref input range is
 // forbidden otherwise we would not need to use move_key and move_value.
-template <bool debug, bool move_key, bool move_value, typename K, typename V>
+template <bool move_key, bool move_value, typename K, typename V>
 std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, V>& p) {
-    if (move_key && move_value) {
-        if constexpr (debug)
-            std::cerr << "move key&value from pair\n";
+    if (move_key && move_value)
         return {std::move(p.first), std::make_shared<V>(std::move(p.second))};
-    } else if (move_value) {
-        if constexpr (debug)
-            std::cerr << "move value from pair\n";
+    else if (move_value)
         return {p.first, std::make_shared<V>(std::move(p.second))};
-    } else {
-        if constexpr (debug)
-            std::cerr << "copy from pair\n";
+    else {
         return {p.first, std::make_shared<V>(p.second)};
     }
 }
 
-template <bool debug, bool move_key, bool move_value, typename K, typename V>
+template <bool move_key, bool move_value, typename K, typename V>
 std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, V> const& p) {
-    if constexpr (debug)
-        std::cerr << "copy from pair\n";
     return {p.first, std::make_shared<V>(p.second)};
 }
 
-template <bool debug, bool move_key, bool move_value, typename K, typename V>
+template <bool move_key, bool move_value, typename K, typename V>
 std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, std::shared_ptr<V>>& p) {
-    if constexpr (debug)
-        std::cerr << "move pair\n";
     return std::move(p);
 }
 
-template <bool debug, bool move_key, bool move_value, typename K, typename V>
+template <bool move_key, bool move_value, typename K, typename V>
 std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, std::shared_ptr<V>> const& p) {
-    if constexpr (debug)
-        std::cerr << "copy pair\n";
     return p;
 }
 
@@ -110,10 +96,6 @@ template <typename Key, typename Value, std::ranges::forward_range T, bool updat
         { traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
     }
 auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_state) -> diff<Key, Value> {
-
-    constexpr bool debug_template = false;
-    constexpr bool debug = false;
-
     constexpr bool is_rvalue_range = std::is_rvalue_reference_v<decltype(new_state)>;
     // could be done with conditional and static_cast<T&&>
     using range_type = std::remove_reference_t<decltype(new_state)>;
@@ -157,13 +139,6 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
     constexpr bool do_move_key = is_rvalue_range && !const_key;
     constexpr bool do_move_value = is_rvalue_range && !const_value;
 
-    if constexpr (debug_template) {
-        std::cerr << "is_rvalue_range: " << is_rvalue_range << "\nnis_const_range: " << is_const_range
-                  << "\nrange_has_shared_ptr_values: " << range_has_shared_ptr_values
-                  << "\nconst_value: " << const_value << "\nconst_key: " << const_key
-                  << "\ndo_move_key: " << do_move_key << "\ndo_move_value: " << do_move_value << "\n\n";
-    }
-
     auto current_it = current_state.begin();
     auto new_it = new_state.begin();
     auto result = diff<Key, Value>{};
@@ -174,18 +149,9 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
         Key const& new_key = diff_detail::access_key(*new_it);
         Value const& new_value = diff_detail::access_value(*new_it);
 
-        if constexpr (debug) {
-            std::cerr << "\n--------\ncurrent " << current_key << " - " << current_value << std::endl;
-            std::cerr << "new " << new_key << " - " << new_value << std::endl << std::endl;
-        }
-
-        if (std::less<>{}(current_key, new_key)) {
+        if (std::less<>{}(current_key, new_key) ) {
             // new key not in current -> upsert
-            std::cerr << "case A\n";
             result.remove.push_back(current_key);
-
-            if constexpr (debug)
-                std::cerr << "erase " << current_key << std::endl;
 
             if constexpr (update_state)
                 current_state.erase(current_it++);
@@ -194,32 +160,21 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
 
         } else if (std::less<>{}(new_key, current_key)) {
             // new key not in current -> upsert
-            std::cerr << "case B\n";
-            result.upsert.push_back(diff_detail::create_upsert_pair<debug, do_move_key, do_move_value>(*new_it));
+            result.upsert.push_back(diff_detail::create_upsert_pair<do_move_key, do_move_value>(*new_it));
 
             if constexpr (update_state) {
                 current_it = current_state.insert(current_it, result.upsert.back());
                 ++current_it;
             }
 
-            if constexpr (debug)
-                std::cerr << "insert " << new_key << " - " << new_value << std::endl;
-
             ++new_it;
         } else {
             // keys equal -> upsert
-            std::cerr << "case C\n";
             if (!traits<Value>::compare(current_value, new_value)) {
-                result.upsert.push_back(diff_detail::create_upsert_pair<debug, do_move_key, do_move_value>(*new_it));
+                result.upsert.push_back(diff_detail::create_upsert_pair<do_move_key, do_move_value>(*new_it));
 
                 if constexpr (update_state)
                     current_it->second = result.upsert.back().second;
-
-                if constexpr (debug) {
-                    std::cerr << "update " << new_key << " - " << new_value << std::endl;
-                    std::cerr << "update " << result.upsert.back().first << " - " << *(result.upsert.back().second)
-                              << std::endl;
-                }
             }
 
             ++current_it;
@@ -229,12 +184,7 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
 
     // Erase leftover range from current_state
     while (current_it != current_state.end()) {
-        std::cerr << "case D\n";
         result.remove.push_back(current_it->first);
-
-        if constexpr (debug) {
-            std::cerr << "erase " << current_it->first << std::endl;
-        }
 
         if constexpr (update_state)
             current_state.erase(current_it++);
@@ -244,15 +194,10 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
 
     // upsert remaining new pairs
     while (new_it != new_state.end()) {
-        std::cerr << "case E\n";
-        result.upsert.push_back(diff_detail::create_upsert_pair<debug, do_move_key, do_move_value>(*new_it));
+        result.upsert.push_back(diff_detail::create_upsert_pair<do_move_key, do_move_value>(*new_it));
 
         if constexpr (update_state)
             current_state.insert(result.upsert.back());
-
-        if constexpr (debug) {
-            std::cerr << "insert " << new_it->first << " - " << diff_detail::access_value(*new_it) << std::endl;
-        }
 
         ++new_it;
     }
