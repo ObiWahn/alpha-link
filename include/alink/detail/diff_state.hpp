@@ -5,6 +5,11 @@
 #include <ranges>
 #include <vector>
 
+#if (defined(ALLOW_HEAVY_RUNTIME_CHECKS) || defined(ALINK_ALLOW_HEAVY_RUNTIME_CHECKS))
+    #include <algorithm>
+    #include <stdexcept>
+#endif
+
 #include "../traits.hpp"
 
 #include <iostream>
@@ -131,6 +136,16 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
                       "The iterator value should be of the form `std::pair<Key, Value>` or "
                       "`std::pair<Key, std::shared_ptr<Value>>`. Additional const qualifiers are allowed");
 
+#if (defined(ALLOW_HEAVY_RUNTIME_CHECKS) || defined(ALINK_ALLOW_HEAVY_RUNTIME_CHECKS))
+    // Check in debug that we are really sorted
+    bool sorted = std::is_sorted(new_state.begin(), new_state.end(), [](auto const& a, auto const& b) {
+        static_assert(std::is_same_v<Key, std::remove_cvref_t<decltype(a.first)>>);
+        return std::less<>{}(a.first, b.first);
+    });
+    if (!sorted)
+        throw std::runtime_error("The provided new_state is not sorted.");
+#endif
+
     using iter_type = std::ranges::iterator_t<T>;      // here we get the iterator which might be const or not
     using ref_type = std::iter_reference_t<iter_type>; // e.g std::pair<int, int> const&
     // the (( )) is important so we get the expression type and not how the member is declared
@@ -164,7 +179,7 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
             std::cerr << "new " << new_key << " - " << new_value << std::endl << std::endl;
         }
 
-        if (std::less<>{}(current_key, new_key) ) {
+        if (std::less<>{}(current_key, new_key)) {
             // new key not in current -> upsert
             std::cerr << "case A\n";
             result.remove.push_back(current_key);
@@ -245,10 +260,7 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
     return result;
 }
 
-template <typename Key,
-          typename Value,
-          std::ranges::forward_range T,
-          bool update_state = true>
+template <typename Key, typename Value, std::ranges::forward_range T, bool update_state = true>
     requires requires(Value a, Value b) {
         { traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
     }

@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#define ALLOW_HEAVY_RUNTIME_CHECKS yes
 #include <alink/detail/diff_state.hpp>
+
 
 namespace alink {
 
