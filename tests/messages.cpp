@@ -1,28 +1,10 @@
+#define ALLOW_HEAVY_RUNTIME_CHECKS yes
+#include <gtest/gtest.h>
+
+#include "alink_traits_int.hpp"
 #include <alink/messages.hpp>
 
-namespace alink {
-
-template <>
-struct alink_traits<int> : std::true_type {
-    typedef int hash_type;
-    typedef int key_type;
-
-    static bool compare(int const& a, int const& b) {
-        return a == b;
-    }
-    static int hash(int const& x) {
-        return x;
-    }
-    static int key(int const& x) {
-        return x;
-    }
-};
-
-namespace {
-void test() {
-    leader_message<int> l;
-}
-} // namespace
+using namespace alink;
 
 #ifdef __GNUC__
 static_assert(sizeof(std::vector<std::pair<int, int>>) == 24);
@@ -40,4 +22,7 @@ static_assert(sizeof(follower_message<int>) ==
               4 /*seq*/ + 2 /*client_id*/ + 2 /*state_id*/ + 1 /*bit flags*/ + 7 /*free*/ + 24 /*data_request*/);
 #endif
 
-} // namespace alink
+TEST(leader_message, construct) {
+    alink::leader_message<int> leader_message;
+    EXPECT_NE(&leader_message, nullptr); // LCOV_EXCL_LINE
+}
