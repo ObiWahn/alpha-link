@@ -1,21 +1,22 @@
 #pragma once
 
-#include "../messages.hpp"
+#include "messages.hpp"
 
 #include <map>
 #include <memory>
-
 
 namespace alink::detail {
 
 using new_state_type = bool;
 using in_sync_type = bool;
 
-template <std::totally_ordered Key, std::move_constructible Value, std::equality_comparable Hash>
-    requires HasTraits<Value, Hash>
+template <ALinkValue Value>
 class base_model {
-    using leader_message_type = alink::leader_message<Key, Value, Hash>;
-    using follower_message_type = alink::follower_message<Key, Value, Hash>;
+    using Key = alink_traits<Value>::key_type;
+    using Hash = alink_traits<Value>::hash_type;
+
+    using leader_message_type = alink::leader_message<Value>;
+    using follower_message_type = alink::follower_message<Value>;
     using model_map_type = std::map<Key, std::shared_ptr<Value>>;
 
     bool upsert(Key const& key, Value const& value);

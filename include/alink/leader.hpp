@@ -1,25 +1,24 @@
 #pragma once
 
-#include "detail/base.hpp"
-
-
+#include "model_base.hpp"
 
 namespace alink {
 
 using new_state_type = bool;
 using in_sync_type = bool;
 
-template <typename Key, typename Value, typename Hash>
-class leader : public detail::base_model<Key, Value, Hash>{
+template <ALinkValue Value>
+class leader : public detail::base_model<Value>{
 public:
-    using base = detail::base_model<Key,Value,Hash>;
+    using base = detail::base_model<Value>;
+    using typename base::Key;
+    using typename base::Hash;
     using typename base::leader_message_type;
     using typename base::follower_message_type;
     using base::upsert;
     using base::remove;
 
     leader() = default;
-
 
     bool active_next_state();
 
@@ -37,8 +36,8 @@ private:
 };
 
 
-template <typename Key, typename Value, typename Hash>
-bool leader<Key, Value, Hash>::active_next_state() {
+template <ALinkValue Value>
+bool leader<Value>::active_next_state() {
         auto tmp = std::move(active_state);
         active_state = std::move(next_state);
         // add missing
@@ -46,8 +45,8 @@ bool leader<Key, Value, Hash>::active_next_state() {
 };
 
 
-template <typename Key, typename Value, typename Hash>
-auto leader<Key, Value, Hash>::handle(follower_message_type&& in_msg) -> std::tuple<leader_message_type, in_sync_type>{
+template <ALinkValue Value>
+auto leader<Value>::handle(follower_message_type&& in_msg) -> std::tuple<leader_message_type, in_sync_type>{
     auto result = std::tuple{ create_message(), false };
     auto& out_msg = std::get<0>(result);
     auto& done = std::get<1>(result);
@@ -56,14 +55,14 @@ auto leader<Key, Value, Hash>::handle(follower_message_type&& in_msg) -> std::tu
 };
 
 
-template <typename Key, typename Value, typename Hash>
-auto leader<Key, Value, Hash>::sync() -> leader_message_type {
+template <ALinkValue Value>
+auto leader<Value>::sync() -> leader_message_type {
     auto msg = create_message();
     return msg;
 };
 
-template <typename Key, typename Value, typename Hash>
-auto leader<Key, Value, Hash>::create_message() -> leader_message_type {
+template <ALinkValue Value>
+auto leader<Value>::create_message() -> leader_message_type {
     leader_message_type msg{};
     return msg;
 };

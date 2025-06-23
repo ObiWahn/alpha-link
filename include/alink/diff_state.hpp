@@ -10,15 +10,9 @@
     #include <stdexcept>
 #endif
 
-#include "../traits.hpp"
+#include "traits.hpp"
 
-namespace alink::detail {
-
-template <typename Key, typename Value>
-struct diff {
-    std::vector<std::pair<Key, std::shared_ptr<Value>>> upsert;
-    std::vector<Key> remove;
-};
+namespace alink {
 
 namespace diff_detail {
 
@@ -82,6 +76,12 @@ std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, std::shared_ptr
 
 } // namespace diff_detail
 
+template <typename Key, typename Value>
+struct diff_state_result {
+    std::vector<std::pair<Key, std::shared_ptr<Value>>> upsert;
+    std::vector<Key> remove;
+};
+
 //! \brief creates a diff between current_state and new_state, optionally updating current state
 /**
  *  \param current_state: reference to current state
@@ -98,9 +98,9 @@ std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, std::shared_ptr
  */
 template <typename Key, typename Value, std::ranges::forward_range T, bool update_state = true>
     requires requires(Value a, Value b) {
-        { traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
+        { alink_traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
     }
-auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_state) -> diff<Key, Value> {
+auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_state) -> diff_state_result<Key, Value> {
     constexpr bool is_rvalue_range = std::is_rvalue_reference_v<decltype(new_state)>;
     // could be done with conditional and static_cast<T&&>
     using range_type = std::remove_reference_t<decltype(new_state)>;
@@ -146,7 +146,7 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
 
     auto current_it = current_state.begin();
     auto new_it = new_state.begin();
-    auto result = diff<Key, Value>{};
+    auto result = diff_state_result<Key, Value>{};
 
     while (current_it != current_state.end() && new_it != new_state.end()) {
         Key const& current_key = diff_detail::access_key(*current_it);
@@ -175,7 +175,7 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
             ++new_it;
         } else {
             // keys equal -> upsert
-            if (!traits<Value>::compare(current_value, new_value)) {
+            if (!alink_traits<Value>::compare(current_value, new_value)) {
                 result.upsert.push_back(diff_detail::create_upsert_pair<do_move_key, do_move_value>(*new_it));
 
                 if constexpr (update_state)
@@ -212,10 +212,10 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
 
 template <typename Key, typename Value, std::ranges::forward_range T, bool update_state = true>
     requires requires(Value a, Value b) {
-        { traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
+        { alink_traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
     }
-auto diff_and_update_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_state) -> diff<Key, Value> {
+auto diff_and_update_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_state) -> diff_state_result<Key, Value> {
     return diff_state<Key, Value, T, true>(current_state, std::forward<T>(new_state));
 }
 
-} // namespace alink::detail
+} // namespace alink
