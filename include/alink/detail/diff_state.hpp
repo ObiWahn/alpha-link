@@ -67,7 +67,12 @@ std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, V> const& p) {
 
 template <bool move_key, bool move_value, typename K, typename V>
 std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, std::shared_ptr<V>>& p) {
-    return std::move(p);
+    if (move_key && move_value)
+        return std::move(p);
+    else if (move_value)
+        return {p.first, std::move(p.second)};
+    else
+        return p;
 }
 
 template <bool move_key, bool move_value, typename K, typename V>
