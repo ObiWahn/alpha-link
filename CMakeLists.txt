@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.31)
 project(alpha-link CXX)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(CODE_COVERAGE "Enable code coverage flags" OFF)
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+    if(CODE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(STATUS "Building with code coverage enabled")
+        add_compile_options(--coverage)
+        add_link_options(--coverage)
+    endif()
+endif()
 
 add_library(alink
     ${CMAKE_CURRENT_LIST_DIR}/src/messages_test.cpp
