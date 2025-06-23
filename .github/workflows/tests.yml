@@ -13,10 +13,41 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y cmake g++ ninja-build googletest libgtest-dev
 
     - name: Configure
-      run: cmake -B build -G Ninja -DBUILD_TESTING=ON
+      run: cmake -B build -G Ninja -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DCODE_COVERAGE=ON
 
     - name: Build
       run: cmake --build build
 
     - name: Run tests
       run: ctest --test-dir build --output-on-failure
+
+    - name: Install gcovr
+      run: pip install gcovr
+
+    - name: Generate coverage report
+      run: |
+          gcovr -r /home/runner/work/alpha-link/alpha-link \
+             --exclude 'tests/.*' \
+             --filter 'include/.*' \
+             --filter 'src/.*' \
+             --xml-pretty -o coverage.xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: coverage.xml
+        fail_ci_if_error: true
+        verbose: true
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    # - name: Upload coverage report
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: coverage-report
+    #     path: coverage.xml
+
+    # - name: show env
+    #   run: pwd ; ls -lisah
+
+    # - name: Show report
+    #   run: cat coverage.xml

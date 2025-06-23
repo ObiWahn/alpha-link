@@ -34,7 +34,7 @@ TEST(diff_state, vector_input) {
         };
         auto result = compare_sorted_equal(actual, expected);
         if (!result)
-            EXPECT_EQ(actual, expected);
+            EXPECT_EQ(actual, expected); // LCOV_EXCL_LINE
         EXPECT_TRUE(result);
     }
 }
@@ -62,7 +62,7 @@ TEST(diff_state, const_vector_input) {
         };
         auto result = compare_sorted_equal(actual, expected);
         if (!result)
-            EXPECT_EQ(actual, expected);
+            EXPECT_EQ(actual, expected); // LCOV_EXCL_LINE
         EXPECT_TRUE(result);
     }
     {
@@ -73,7 +73,7 @@ TEST(diff_state, const_vector_input) {
         };
         auto result = compare_sorted_equal(state, expected);
         if (!result)
-            EXPECT_EQ(state, expected);
+            EXPECT_EQ(state, expected); // LCOV_EXCL_LINE
         EXPECT_TRUE(result);
     }
 }
@@ -98,7 +98,7 @@ TEST(diff_state, rvalue_state_map_input) {
         };
         auto result = compare_sorted_equal(actual, expected);
         if (!result)
-            EXPECT_EQ(actual, expected);
+            EXPECT_EQ(actual, expected); // LCOV_EXCL_LINE
         EXPECT_TRUE(result);
     }
 }
@@ -123,12 +123,12 @@ TEST(diff_state, const_state_map_input) {
         };
         auto result = compare_sorted_equal(actual, expected);
         if (!result)
-            EXPECT_EQ(actual, expected);
+            EXPECT_EQ(actual, expected); // LCOV_EXCL_LINE
         EXPECT_TRUE(result);
     }
 
     auto result = compare_sorted_equal(state, next_state);
     if (!result)
-        EXPECT_EQ(state, next_state);
+        EXPECT_EQ(state, next_state); // LCOV_EXCL_LINE
     EXPECT_TRUE(result);
 }
