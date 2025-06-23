@@ -7,5 +7,4 @@ add_executable(test-alink
 
 target_link_libraries(test-alink PUBLIC GTest::gtest alink)
 
-#add_test(NAME test COMMAND $<TARGET_FILE:${TESTNAME}>)
-
+gtest_discover_tests(test-alink)
