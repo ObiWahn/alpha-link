@@ -2,9 +2,11 @@ find_package(GTest REQUIRED)
 
 add_executable(test-alink
     gtest.cpp
+    test_common.cpp
     diff_state.cpp
+    messages.cpp
 )
 
-target_link_libraries(test-alink PUBLIC GTest::gtest alink)
+target_link_libraries(test-alink PRIVATE GTest::gtest alink)
 
 gtest_discover_tests(test-alink)

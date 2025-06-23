@@ -2,25 +2,7 @@
 
 #include <alink/diff_state.hpp>
 
-namespace alink {
-
-template <>
-struct alink_traits<int> : std::true_type {
-    using hash_type = int;
-    using key_type = int;
-
-    static bool compare(int const& lhs, int const& rhs) {
-        return lhs == rhs;
-    }
-    static int hash(int const& x) {
-        return x;
-    }
-    static int key(int const& x) {
-        return x;
-    }
-};
-
-} // namespace alink
+#include "alink_traits_int.hpp"
 
 namespace alink::test_common {
 
@@ -31,7 +13,7 @@ using state_map = std::map<int, std::shared_ptr<int>>;
 
 template <typename T>
     requires std::same_as<T, vec_pair_shared> || std::same_as<T, state_map>
-bool compare_sorted_equal(T const& a, T const& b) {
+bool compare_sorted(T const& a, T const& b) {
     using namespace alink::diff_detail;
 
     if (a.size() != b.size())
@@ -56,7 +38,7 @@ bool compare_sorted_equal(T const& a, T const& b) {
     return true;
 }
 
-inline bool equal_states(state_map const& a, state_map const& b) {
+inline bool compare_states(state_map const& a, state_map const& b) {
     if (a.size() != b.size())
         return false;
 

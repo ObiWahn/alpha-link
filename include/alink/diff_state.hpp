@@ -49,9 +49,8 @@ std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, V>& p) {
         return {std::move(p.first), std::make_shared<V>(std::move(p.second))};
     else if (move_value)
         return {p.first, std::make_shared<V>(std::move(p.second))};
-    else {
+    else
         return {p.first, std::make_shared<V>(p.second)};
-    }
 }
 
 template <bool move_key, bool move_value, typename K, typename V>
@@ -96,7 +95,7 @@ struct diff_state_result {
  *  \note in order to allow moving values from `new_state` it has to be moved into the fuction
  *
  */
-template <typename Key, typename Value, std::ranges::forward_range T, bool update_state = true>
+template <typename Key, typename Value, std::ranges::forward_range T, bool update_state = false>
     requires requires(Value a, Value b) {
         { alink_traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
     }
@@ -130,7 +129,7 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
         return std::less<>{}(a.first, b.first);
     });
     if (!sorted)
-        throw std::runtime_error("The provided new_state is not sorted.");
+        throw std::invalid_argument("The provided new_state is not sorted.");
 #endif
 
     using iter_type = std::ranges::iterator_t<T>;      // here we get the iterator which might be const or not

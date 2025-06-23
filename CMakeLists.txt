@@ -14,7 +14,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 
 add_library(alink
-    ${CMAKE_CURRENT_LIST_DIR}/src/messages_test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/common.cpp
 )
 set_property(TARGET alink PROPERTY CMAKE_CXX_STANDARD 20)
 
