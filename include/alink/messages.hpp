@@ -8,10 +8,10 @@
 
 namespace alink {
 
-template <ALinkValue Value>
+template <StateValue Value>
 struct leader_message {
-    using Key = alink_traits<Value>::key_type;
-    using Hash = alink_traits<Value>::hash_type;
+    using Key = state_value_trait<Value>::key_type;
+    using Hash = state_value_trait<Value>::hash_type;
     // align 8
     std::uint32_t seq;       // last seen seq of leader
     std::uint16_t client_id; // identifier of target follower - 0 for all
@@ -27,10 +27,10 @@ struct leader_message {
     std::vector<std::pair<Key, Value>> data;
 };
 
-template <ALinkValue Value>
+template <StateValue Value>
 struct follower_message {
-    using Key = alink_traits<Value>::key_type;
-    using Hash = alink_traits<Value>::hash_type;
+    using Key = state_value_trait<Value>::key_type;
+    using Hash = state_value_trait<Value>::hash_type;
     // align 8
     std::uint32_t seq;       // id that is increased on every send message
     std::uint16_t client_id; // identifier of sending follower

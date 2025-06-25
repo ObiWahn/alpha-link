@@ -1,13 +1,14 @@
 #pragma once
 
-#include "model_base.hpp"
+#include "base_model.hpp"
 
 namespace alink {
 
 using new_state_type = bool;
 using in_sync_type = bool;
 
-template <ALinkValue Value>
+template <typename  Value, typename  KeyFunction, typename HashFunction>
+requires Leader<Value, KeyFunction, HashFunction>
 class leader : public detail::base_model<Value>{
 public:
     using base = detail::base_model<Value>;
@@ -15,10 +16,12 @@ public:
     using typename base::Hash;
     using typename base::leader_message_type;
     using typename base::follower_message_type;
+
     using base::upsert;
     using base::remove;
 
-    leader() = default;
+    leader(KeyFunction key_fun, HashFunction hash_fun) {
+    }
 
     bool active_next_state();
 
@@ -27,26 +30,30 @@ public:
 
 
 private:
+    bool must_sync = false;
+
     leader_message_type create_message();
 
-    std::map<Key, std::shared_ptr<Value>> active_state;
-    std::map<Key, std::shared_ptr<Value>> next_state;
-    uint32_t active_state_id;
-    uint32_t next_state_id;
+};
+
+template <typename KeyFunction, typename HashFunction>
+requires Leader<first_argument_t<KeyFunction>, KeyFunction, HashFunction>
+leader(KeyFunction, HashFunction)
+-> leader<first_argument_t<KeyFunction>, KeyFunction, HashFunction>;
+
+
+template <typename  Value, typename  KeyFunction, typename HashFunction>
+requires Leader<Value, KeyFunction, HashFunction>
+auto leader<Value, KeyFunction, HashFunction>::active_next_state() -> bool {
+    auto diff = diff_and_update_state(this->active_state, this->next_state);
+    must_sync |= !(diff.upsert.empty() && diff.remove.empty());
+    return !must_sync;
 };
 
 
-template <ALinkValue Value>
-bool leader<Value>::active_next_state() {
-        auto tmp = std::move(active_state);
-        active_state = std::move(next_state);
-        // add missing
-        next_state = std::move(tmp);
-};
-
-
-template <ALinkValue Value>
-auto leader<Value>::handle(follower_message_type&& in_msg) -> std::tuple<leader_message_type, in_sync_type>{
+template <typename  Value, typename  KeyFunction, typename HashFunction>
+requires Leader<Value, KeyFunction, HashFunction>
+auto leader<Value, KeyFunction, HashFunction>::handle(follower_message_type&& in_msg) -> std::tuple<leader_message_type, in_sync_type>{
     auto result = std::tuple{ create_message(), false };
     auto& out_msg = std::get<0>(result);
     auto& done = std::get<1>(result);
@@ -55,14 +62,17 @@ auto leader<Value>::handle(follower_message_type&& in_msg) -> std::tuple<leader_
 };
 
 
-template <ALinkValue Value>
-auto leader<Value>::sync() -> leader_message_type {
+template <typename  Value, typename  KeyFunction, typename HashFunction>
+requires Leader<Value, KeyFunction, HashFunction>
+auto leader<Value, KeyFunction, HashFunction>::sync() -> leader_message_type {
     auto msg = create_message();
     return msg;
 };
 
-template <ALinkValue Value>
-auto leader<Value>::create_message() -> leader_message_type {
+
+template <typename  Value, typename  KeyFunction, typename HashFunction>
+requires Leader<Value, KeyFunction, HashFunction>
+auto leader<Value, KeyFunction, HashFunction>::create_message() -> leader_message_type {
     leader_message_type msg{};
     return msg;
 };

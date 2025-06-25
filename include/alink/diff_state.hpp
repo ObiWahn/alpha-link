@@ -95,11 +95,11 @@ struct diff_state_result {
  *  \note in order to allow moving values from `new_state` it has to be moved into the fuction
  *
  */
-template <typename Key, typename Value, std::ranges::forward_range T, bool update_state = false>
+template <typename Key, typename Value, PairRange R, bool update_state = false>
     requires requires(Value a, Value b) {
-        { alink_traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
+        { state_value_trait<Value>::compare(a, b) } -> std::convertible_to<bool>;
     }
-auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_state) -> diff_state_result<Key, Value> {
+auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, R&& new_state) -> diff_state_result<Key, Value> {
     constexpr bool is_rvalue_range = std::is_rvalue_reference_v<decltype(new_state)>;
     // could be done with conditional and static_cast<T&&>
     using range_type = std::remove_reference_t<decltype(new_state)>;
@@ -132,7 +132,7 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
         throw std::invalid_argument("The provided new_state is not sorted.");
 #endif
 
-    using iter_type = std::ranges::iterator_t<T>;      // here we get the iterator which might be const or not
+    using iter_type = std::ranges::iterator_t<R>;      // here we get the iterator which might be const or not
     using ref_type = std::iter_reference_t<iter_type>; // e.g std::pair<int, int> const&
     // the (( )) is important so we get the expression type and not how the member is declared
     using key_ref_type = decltype((std::declval<ref_type>().first));
@@ -174,7 +174,7 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
             ++new_it;
         } else {
             // keys equal -> upsert
-            if (!alink_traits<Value>::compare(current_value, new_value)) {
+            if (!state_value_trait<Value>::compare(current_value, new_value)) {
                 result.upsert.push_back(diff_detail::create_upsert_pair<do_move_key, do_move_value>(*new_it));
 
                 if constexpr (update_state)
@@ -209,12 +209,12 @@ auto diff_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_st
     return result;
 }
 
-template <typename Key, typename Value, std::ranges::forward_range T, bool update_state = true>
+template <typename Key, typename Value, PairRange R, bool update_state = true>
     requires requires(Value a, Value b) {
-        { alink_traits<Value>::compare(a, b) } -> std::convertible_to<bool>;
+        { state_value_trait<Value>::compare(a, b) } -> std::convertible_to<bool>;
     }
-auto diff_and_update_state(std::map<Key, std::shared_ptr<Value>>& current_state, T&& new_state) -> diff_state_result<Key, Value> {
-    return diff_state<Key, Value, T, true>(current_state, std::forward<T>(new_state));
+auto diff_and_update_state(std::map<Key, std::shared_ptr<Value>>& current_state, R&& new_state) -> diff_state_result<Key, Value> {
+    return diff_state<Key, Value, R, true>(current_state, std::forward<R>(new_state));
 }
 
 } // namespace alink
