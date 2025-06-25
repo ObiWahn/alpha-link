@@ -25,8 +25,12 @@ jobs:
       run: pip install gcovr
 
     - name: Generate coverage report
-      #run: gcovr -r /home/runner/work/alpha-link/alpha-link --exclude 'tests/.*' --filter 'include/.*' --filter 'src/.*' --xml-pretty -o coverage.xml
-      run: gcovr -r /home/runner/work/alpha-link/alpha-link --xml-pretty -o coverage.xml
+      run: |
+          gcovr -r /home/runner/work/alpha-link/alpha-link \
+             --exclude 'tests/.*' \
+             --filter 'include/.*' \
+             --filter 'src/.*' \
+             --xml-pretty -o coverage.xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4

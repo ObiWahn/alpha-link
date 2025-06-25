@@ -1,0 +1,20 @@
+coverage:
+  precision: 2
+  round: down
+  range: 70..100
+
+comment:
+  behavior: default
+  layout: "reach, diff, files"
+  require_changes: false
+
+ignore:
+  - "tests/*"
+  - "third_party/"
+  - "**/generated/**"
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: true
+      loop: true
