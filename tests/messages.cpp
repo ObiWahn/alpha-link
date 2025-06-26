@@ -1,8 +1,8 @@
 #define ALLOW_HEAVY_RUNTIME_CHECKS yes
-#include <gtest/gtest.h>
 
-#include "alink_traits_int.hpp"
+#include "test_traits.hpp"
 #include <alink/messages.hpp>
+#include <gtest/gtest.h>
 
 using namespace alink;
 
