@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+CXXFLAGS='-fsanitizer-address -fno-omit-framepointer' \
+ocmake Debug \
+    -DBUILD_TESTING=ON \
+    -DCODE_COVERAGE=ON

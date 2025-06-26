@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+GDB=''
+if [[ $1 == 'gdb' ]]; then
+    GDB='/usr/bin/gdb --args'
+    shift
+fi
+
+args=( --gtest_brief=1 )
+if  [[ -n $* ]]; then
+    args=( "$@" )
+fi
+
+watchdir . "omake && $GDB ../alpha-link-build/current/tests/test-alink ${args[@]}"
