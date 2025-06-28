@@ -27,6 +27,8 @@ jobs:
     - name: Generate coverage report
       run: |
           gcovr -r /home/runner/work/alpha-link/alpha-link \
+             --exclude-throw-branches \
+             --exclude-unreachable-branches \
              --exclude 'tests/.*' \
              --filter 'include/.*' \
              --filter 'src/.*' \
