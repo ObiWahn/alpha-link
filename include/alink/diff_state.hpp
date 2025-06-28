@@ -65,7 +65,10 @@ std::pair<K, std::shared_ptr<V>> create_upsert_pair(std::pair<K, std::shared_ptr
     else if (move_value)
         return {p.first, std::move(p.second)};
     else
-        return p;
+        // we need a copy! Because the pointer is still owned by the source and might
+        // be futher mutated.
+        // TODO - implement something for shared_ptr<T const> which would be unproblematic to share
+        return {p.first, std::make_shared<V>(*p.second)};
 }
 
 template <bool move_key, bool move_value, typename K, typename V>
