@@ -1,8 +1,7 @@
 #pragma once
 
 #include <alink/diff_state.hpp>
-
-#include "alink_traits_int.hpp"
+#include "test_traits.hpp"
 
 namespace alink::test_common {
 

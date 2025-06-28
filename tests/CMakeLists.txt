@@ -5,6 +5,8 @@ add_executable(test-alink
     test_common.cpp
     diff_state.cpp
     messages.cpp
+    base_model.cpp
+    leader.cpp
 )
 
 target_link_libraries(test-alink PRIVATE GTest::gtest alink)
